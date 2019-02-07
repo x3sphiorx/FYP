@@ -1,7 +1,7 @@
  /*
-        Acquire the elliptic ec module.
-        Acquire the cryptoHash module for data hashing.
-        */
+         Acquire the elliptic ec module.
+         Acquire the cryptoHash module for data hashing.
+         */
  const EC = require('elliptic').ec;
  const cryptoHash = require('./crypto-hash');
 
@@ -29,4 +29,4 @@
      return keyFromPublic.verify(cryptoHash(data), signature);
  };
 
- module.exports = { ec, verifySignature };
+ module.exports = { ec, verifySignature, cryptoHash };

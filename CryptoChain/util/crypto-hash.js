@@ -5,7 +5,12 @@ const hexToBinary = require('hex-to-binary');
 const cryptoHash = (...inputs) => {
     const hash = crypto.createHash('sha256');
 
-    hash.update(inputs.sort().join(' '));
+    //Added JSON Stringify to map the inputs and converting them to 
+    //JSON stringify form. If the properties changes, so does the stringify form
+    hash.update(
+        inputs.map(
+            input => JSON.stringify(input))
+        .sort().join(' '));
 
     //1. Return hash in hex 
     return hash.digest('hex');
