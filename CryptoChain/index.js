@@ -9,24 +9,31 @@ Declare the Blockchain class and a blockchain instance.
 Declare middleware bodyParser, parse Json body from the body request.
 Declare the Publisher and Subscriber class for network communication.
 Declare a request module to sync up with the nodes of the blockchan.
+Declare a Transaction Pool module to add transaction to pool
+Declare a Wallet module to create transaction.
 */
 const express = require('express');
 const request = require('request');
 const bodyParser = require('body-parser');
 const Blockchain = require('./blockchain');
 const PubSub = require('./app/pubsub');
+const TransactionPool = require('./wallet/transaction-pool');
+const Wallet = require('./wallet/');
 
 /*
 Declare a default port (3000). 
 Declare an express object by calling the express function.
 Declare a blockchain instance.
+Declare a TransactionPool instance
+Declare a Wallet instance
 Declare a pubSub instance.
 Declare a root node address.
 */
 const app = express();
 const blockchain = new Blockchain();
-const pubsub = new PubSub({ blockchain });
-
+const transactionPool = new TransactionPool();
+const wallet = new Wallet();
+const pubsub = new PubSub({ blockchain, transactionPool });
 const DEFAULT_PORT = 3000;
 const ROOT_NODE_ADDRESS = `http://localhost:${DEFAULT_PORT}`;
 
@@ -78,8 +85,64 @@ app.post('/api/mine', (req, res) => {
 });
 
 /*
+Conduct a transaction, by calling the wallet to create transaction.
+Input - receiver and the amount to be send over.
+ */
+app.post('/api/transact', (req, res) => {
+    //Destructure the data from the body.
+    const { amount, receiver } = req.body;
+
+    /*
+    Ensure if the transaction by this wallet 
+    is already done by exisiting requester. Check by 
+    calling the exisitingTransaction method with the 
+    local wallet public key.
+    */
+    let transaction = transactionPool.exisitingTransaction({ inputAddress: wallet.publicKey });
+
+    //Try catch block to catch the error of invalid, insufficient amount to be send.
+    try {
+        if (transaction) {
+            //Update to the transaction when requester is making subsequent transaction
+            //in short, repeated transaction from the same person.
+            transaction.update({ senderWallet: wallet, receiver, amount });
+        } else {
+            //Create a new transaction by passing the receiver 
+            //and amount to the local wallet.
+            transaction = wallet.createTransaction({ receiver, amount });
+        }
+    }
+    //Catch the error and return a http status of 400, type of error with error message.
+    catch (error) {
+        return res.status(400).json({ type: 'error', message: error.message });
+    }
+
+    //Pass the transaction in to transaction pool.
+    transactionPool.setTransaction(transaction);
+
+    //Notify/Broadcast all interested part of the update to the transaction
+    pubsub.broadcastTransaction(transaction);
+
+    //Log the transaction.
+    //console.log('transactionPool', transactionPool);
+
+    //Respond with a JSON to the transaction itself
+    res.json({ type: 'success', transaction });
+});
+
+/*
+Retrieve data from the transaction pool map.
+ */
+app.get('/api/transaction-pool-map', (req, res) => {
+    res.json(transactionPool.transactionMap);
+});
+
+
+/*
 Synchronization of the blockchain upon peer emulation start up
+Synchronization of the transaction upon peer emulation start up. 
 Peer get the latest update. 
+
 
 request(2 parameters)
 1. url of the root node address
@@ -88,7 +151,7 @@ request(2 parameters)
     response object - status code of http get request = 200(successful)
     body object - stringify json response
 */
-const syncChains = () => {
+const syncWithRootState = () => {
     request({ url: `${ROOT_NODE_ADDRESS}/api/blocks` }, (error, response, body) => {
         if (!error && response.statusCode === 200) {
             //Parse the body content.
@@ -98,6 +161,18 @@ const syncChains = () => {
 
             //Replace chain
             blockchain.replaceChain(rootChain);
+        }
+    });
+
+    request({ url: `${ROOT_NODE_ADDRESS}/api/transaction-pool-map` }, (error, response, body) => {
+        if (!error && response.statusCode === 200) {
+            //Parse the body content.
+            const rootTransactionPoolMap = JSON.parse(body);
+
+            console.log('replace transaction pool map on a sync with', rootTransactionPoolMap);
+
+            //Replace the entire transaction pool map
+            transactionPool.setMap(rootTransactionPoolMap);
         }
     });
 };
@@ -125,7 +200,7 @@ app.listen(PORT, () => {
     //Remove self synchronization of root node with root node.
     if (PORT !== DEFAULT_PORT) {
         //Synchronization by getting the latest update.
-        syncChains();
+        syncWithRootState();
     }
 
     //Synchronization by getting the latest update. 

@@ -7,20 +7,26 @@ Receiver - Listen to message on the channel.
 //Acquire the redis node.js modules
 const redis = require('redis');
 
-//Define overrall channel map.
-//Added Blockchain network channel.
+/*
+Define overrall channel map.
+Added Blockchain network channel.
+Added Transaction network channel
+*/
 const CHANNELS = {
     TEST: 'TEST',
-    BLOCKCHAIN: 'BLOCKCHAIN'
+    BLOCKCHAIN: 'BLOCKCHAIN',
+    TRANSACTION: 'TRANSACTION'
 }
 
 //Publish Subscriber Class.
 class PubSub {
     //Added blockchain object to the constructor.
-    constructor({ blockchain }) {
+    constructor({ blockchain, transactionPool }) {
 
         //local blockchain instance is equal to the incoming blockchain instance.
+        //local transaction pool instance is equal to the incoming transaction pool instance
         this.blockchain = blockchain;
+        this.transactionPool = transactionPool;
 
         this.publisher = redis.createClient();
         this.subscriber = redis.createClient();
@@ -56,8 +62,21 @@ class PubSub {
         //If the incoming Message is publish via the BLOCKCHAIN Channel
         //then replace the chain if and only if it is a valid one with the longest
         //length.
-        if (channel === CHANNELS.BLOCKCHAIN) {
-            this.blockchain.replaceChain(parsedMessage);
+        //if (channel === CHANNELS.BLOCKCHAIN) {
+        //    this.blockchain.replaceChain(parsedMessage);
+        //}
+
+        //Replace with a switch statement.
+        //Added transaction channel message handler.
+        switch (channel) {
+            case CHANNELS.BLOCKCHAIN:
+                this.blockchain.replaceChain(parsedMessage);
+                break;
+            case CHANNELS.TRANSACTION:
+                this.transactionPool.setTransaction(parsedMessage);
+                break;
+            default:
+                return;
         }
     }
 
@@ -98,6 +117,18 @@ class PubSub {
             channel: CHANNELS.BLOCKCHAIN,
             //Only publish string messages over the channel; Wrap in JSON.
             message: JSON.stringify(this.blockchain.chain)
+        });
+    }
+
+    /*
+    Broadcast the transaction
+    1. Broadcast the transaction on the network.
+    */
+    broadcastTransaction(transaction) {
+        this.publish({
+            channel: CHANNELS.TRANSACTION,
+            //Only publish string messages over the channel; Wrap in JSON.
+            message: JSON.stringify(transaction)
         });
     }
 }
