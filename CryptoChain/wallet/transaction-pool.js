@@ -1,9 +1,40 @@
 /*
-
+Acquire the transaction class.
 */
+const Transaction = require('./transaction');
+
 class TransactionPool {
     constructor() {
         this.transactionMap = {};
+    }
+
+    /*
+    Clear the transaction from the transaction pool after transaction is verified
+    (local).
+    */
+    clear() {
+        this.transactionMap = {};
+    }
+
+    /*
+    Clear the transaction from the transaction pool after transaction is verified
+    (network).
+    */
+    clearBlockchainTransaction({ chain }) {
+        //Loop through the chain, starting at 1, skip the genesis block.
+        for (let i = 1; i < chain.length; i++) {
+            //Declare the instance of the block.
+            const block = chain[i];
+
+            //Loop through the transaction within the blocks.
+            for (let transaction of block.data) {
+                //If the transactionMap contains a value in transaction id , remove the transaction.
+                if (this.transactionMap[transaction.id]) {
+                    //Remote the reference.
+                    delete this.transactionMap[transaction.id];
+                }
+            }
+        }
     }
 
     /*
@@ -37,6 +68,20 @@ class TransactionPool {
             transaction =>
             transaction.input.address === inputAddress);
     }
+
+    /*
+    Ensure if the transaction is valid in the 
+    transaction pool
+    */
+    validTransaction() {
+        //Filter the array by a condition in this case to check every 
+        //single transaction check if is valid
+        return Object.values(this.transactionMap).filter(
+            transaction => Transaction.validTransaction(transaction)
+        );
+    }
+
+
 }
 
 module.exports = TransactionPool;

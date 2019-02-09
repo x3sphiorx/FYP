@@ -70,7 +70,13 @@ class PubSub {
         //Added transaction channel message handler.
         switch (channel) {
             case CHANNELS.BLOCKCHAIN:
-                this.blockchain.replaceChain(parsedMessage);
+                //Added Upon replacing the blockchain, clear the transaction already in the blockchain.
+                //by calling the callback function to clearBlockchainTransaction with the parsedMessage.
+                this.blockchain.replaceChain(parsedMessage, true, () => {
+                    this.transactionPool.clearBlockchainTransaction({
+                        chain: parsedMessage
+                    });
+                });
                 break;
             case CHANNELS.TRANSACTION:
                 this.transactionPool.setTransaction(parsedMessage);

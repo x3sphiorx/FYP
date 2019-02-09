@@ -25,8 +25,19 @@ class Wallet {
         return this.keyPair.sign(cryptoHash(data))
     }
 
-    //Wallet creating transaction method.
-    createTransaction({ receiver, amount }) {
+    /*
+    Wallet creating transaction method.
+    Added the chain into the receiving parameter. 
+    */
+    createTransaction({ receiver, amount, chain }) {
+
+        //if a chain is passed in and definied.
+        if (chain) {
+            this.balance = Wallet.calculateBalance({
+                chain,
+                address: this.publicKey
+            });
+        }
 
         //if the amount is greater than what left in the wallet balance. Throw error
         if (amount > this.balance) {
@@ -35,6 +46,47 @@ class Wallet {
 
         //Return a instance of a transaction class.
         return new Transaction({ senderWallet: this, receiver, amount });
+    }
+
+    /*
+    Calculate the wallet balance method.
+    Added a boolean to track 'hashConductedTransaction'
+    */
+    static calculateBalance({ chain, address }) {
+        let hasConductedTransaction = false;
+        let outputsTotal = 0;
+
+        //Loop through the chain in REVERSE. Skip the genesis block.
+        //Recent transaction at the end of the chain.
+        for (let i = chain.length - 1; i > 0; i--) {
+
+            //Instantiate the individual blocks
+            const block = chain[i];
+
+            //Loop through the transactions.
+            for (let transaction of block.data) {
+
+                //If the address/wallet has conducted a transaction.
+                if (transaction.input.address === address) {
+                    hasConductedTransaction = true;
+                }
+
+                const addressOutput = transaction.outputMap[address];
+
+                //If the addressOutput is definied.
+                if (addressOutput) {
+                    outputsTotal += addressOutput;
+                }
+            }
+
+            //If hasConductedTransaction, break away from forloop.
+            if (hasConductedTransaction) {
+                break;
+            }
+        }
+
+        //return only the outputTotal if indeed the wallet has conducted a transaction.
+        return hasConductedTransaction ? outputsTotal : STARTING_BALANCE + outputsTotal;
     }
 }
 

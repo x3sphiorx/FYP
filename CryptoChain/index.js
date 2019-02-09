@@ -11,6 +11,7 @@ Declare the Publisher and Subscriber class for network communication.
 Declare a request module to sync up with the nodes of the blockchan.
 Declare a Transaction Pool module to add transaction to pool
 Declare a Wallet module to create transaction.
+Declare a Transaction Miner module to mine the transaction via miner.
 */
 const express = require('express');
 const request = require('request');
@@ -19,6 +20,7 @@ const Blockchain = require('./blockchain');
 const PubSub = require('./app/pubsub');
 const TransactionPool = require('./wallet/transaction-pool');
 const Wallet = require('./wallet/');
+const TransactionMiner = require('./app/transaction-miner');
 
 /*
 Declare a default port (3000). 
@@ -27,6 +29,7 @@ Declare a blockchain instance.
 Declare a TransactionPool instance
 Declare a Wallet instance
 Declare a pubSub instance.
+Declare a tansactionMiner instance.
 Declare a root node address.
 */
 const app = express();
@@ -34,6 +37,8 @@ const blockchain = new Blockchain();
 const transactionPool = new TransactionPool();
 const wallet = new Wallet();
 const pubsub = new PubSub({ blockchain, transactionPool });
+const transactionMiner = new TransactionMiner({ blockchain, transactionPool, wallet, pubsub });
+
 const DEFAULT_PORT = 3000;
 const ROOT_NODE_ADDRESS = `http://localhost:${DEFAULT_PORT}`;
 
@@ -47,6 +52,9 @@ Delay with a 1000ms = 1s.
 //Tell express to use the middleware - bodyParser.
 app.use(bodyParser.json());
 
+
+
+
 /*
 Express docket function, get(Type) http request, read, 
 2 Parameters in total 
@@ -59,6 +67,9 @@ Express docket function, get(Type) http request, read,
 app.get('/api/blocks', (req, res) => {
     res.json(blockchain.chain);
 });
+
+
+
 
 /*
 Post request to mine a block on the chain.
@@ -83,6 +94,9 @@ app.post('/api/mine', (req, res) => {
     //Redirect to the /api/blocks endpoint.
     res.redirect('/api/blocks');
 });
+
+
+
 
 /*
 Conduct a transaction, by calling the wallet to create transaction.
@@ -109,7 +123,12 @@ app.post('/api/transact', (req, res) => {
         } else {
             //Create a new transaction by passing the receiver 
             //and amount to the local wallet.
-            transaction = wallet.createTransaction({ receiver, amount });
+            //Added the local instance blockchain.
+            transaction = wallet.createTransaction({
+                receiver,
+                amount,
+                chain: blockchain.chain
+            });
         }
     }
     //Catch the error and return a http status of 400, type of error with error message.
@@ -130,11 +149,40 @@ app.post('/api/transact', (req, res) => {
     res.json({ type: 'success', transaction });
 });
 
+
+
+
 /*
 Retrieve data from the transaction pool map.
  */
 app.get('/api/transaction-pool-map', (req, res) => {
     res.json(transactionPool.transactionMap);
+});
+
+
+
+/*
+Retrieve the transaction miner and mine the transaction, as a "Miner"
+ */
+app.get('/api/mine-transactions', (req, res) => {
+    transactionMiner.mineTransactions();
+
+    res.redirect('/api/blocks')
+});
+
+/*
+Retrieve the wallet balance.
+*/
+app.get('/api/wallet-info', (req, res) => {
+    const address = wallet.publicKey;
+
+    res.json({
+        address,
+        balance: Wallet.calculateBalance({
+            chain: blockchain.chain,
+            address
+        })
+    });
 });
 
 

@@ -1,7 +1,14 @@
+/*
+Acquire the hex to binary module.
+Acqurie the block class module.
+Acquire the GENSIS_DATA & MINER_RATE from config.
+Acquire the cryptohash module.
+*/
 const hexToBinary = require('hex-to-binary');
 const Block = require('./block');
 const { GENESIS_DATA, MINE_RATE } = require('../config');
 const { cryptoHash } = require('../util');
+
 
 describe('Block', () => {
     //2000ms timestamp.

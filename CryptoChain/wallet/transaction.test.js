@@ -2,10 +2,12 @@
 Acqurie the transaction class.
 Acqurie the wallet class.
 Acquire the verifySignature method from the util folder
+Acquire the hardcoded REWARD INPUTS and MINING REWARDS
 */
 const Transaction = require('./transaction');
 const Wallet = require('./index');
-const { verifySignature } = require('../util')
+const { verifySignature } = require('../util');
+const { REWARD_INPUT, MINING_REWARD } = require('../config');
 
 //Describe how the transaction class
 describe('Transaction', () => {
@@ -229,4 +231,28 @@ describe('Transaction', () => {
 
     });
 
+
+    /*
+    Ensure that miner is able to get thier incentive reward (Miner Reward).
+    */
+    describe('rewardTransaction()', () => {
+        let rewardTransaction, minerWallet;
+
+        //Set the local variable as a instance of the wallet class.
+        //rewardTransaction is set to a static method with a input of minerWallet.
+        beforeEach(() => {
+            minerWallet = new Wallet();
+            rewardTransaction = Transaction.rewardTransaction({ minerWallet });
+        });
+
+        //Ensure it create a transaction with a reward input.
+        it('it creates a transaction with the reward input', () => {
+            expect(rewardTransaction.input).toEqual(REWARD_INPUT)
+        });
+
+        //Ensure a transaction is created with the mining rewards.
+        it('it creates one transaction for the miner with the `MINING_REWARD`', () => {
+            expect(rewardTransaction.outputMap[minerWallet.publicKey]).toEqual(MINING_REWARD);
+        });
+    });
 });;

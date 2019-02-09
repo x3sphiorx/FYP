@@ -7,8 +7,8 @@ const MINE_RATE = 1000;
 //Added initial nonce & difficulty field for the gensis data.
 const GENESIS_DATA = {
     timestamp: 1,
-    lastHash: 'There is no last hash',
-    hash: '1st hash; 01-01-2019:12:00:00AM',
+    lastHash: '0 exisiting hashes',
+    hash: '1st hash from 01-01-2019:12:00:00AM',
     difficulty: INITIAL_DIFFICULTY,
     nonce: 0,
     data: []
@@ -17,4 +17,14 @@ const GENESIS_DATA = {
 //Added a starting balance for the new wallet.
 const STARTING_BALANCE = 1000;
 
-module.exports = { GENESIS_DATA, MINE_RATE, STARTING_BALANCE };
+//Added REWARD INPUT (Hardcoded) & MINING Rewards.
+const REWARD_INPUT = { address: '*authorized-reward-from-system*' };
+const MINING_REWARD = 50;
+
+module.exports = {
+    GENESIS_DATA,
+    MINE_RATE,
+    STARTING_BALANCE,
+    REWARD_INPUT,
+    MINING_REWARD
+};
