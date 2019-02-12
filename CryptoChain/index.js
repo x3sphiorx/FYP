@@ -96,8 +96,6 @@ app.post('/api/mine', (req, res) => {
 });
 
 
-
-
 /*
 Conduct a transaction, by calling the wallet to create transaction.
 Input - receiver and the amount to be send over.
@@ -150,25 +148,23 @@ app.post('/api/transact', (req, res) => {
 });
 
 
-
-
 /*
 Retrieve data from the transaction pool map.
  */
-app.get('/api/transaction-pool-map', (req, res) => {
+app.get('/api/trans-pool', (req, res) => {
     res.json(transactionPool.transactionMap);
 });
-
 
 
 /*
 Retrieve the transaction miner and mine the transaction, as a "Miner"
  */
-app.get('/api/mine-transactions', (req, res) => {
+app.get('/api/mine-trans', (req, res) => {
     transactionMiner.mineTransactions();
 
     res.redirect('/api/blocks')
 });
+
 
 /*
 Retrieve the wallet balance.

@@ -20,7 +20,6 @@ class Wallet {
     }
 
     //Sign the incoming data.
-    //
     sign(data) {
         return this.keyPair.sign(cryptoHash(data))
     }
