@@ -1,8 +1,8 @@
  /*
- Experiment file to test for the efficiency of mining of leading zeros in hex vs in binary form 
- Fine tune the efficiency of the proof of work system due to dynamic implemenation of adjusting 
- the difficulty based on the timestamp (millis) and the mining rate.  
- */
+      Experiment file to test for the efficiency of mining of leading zeros in hex vs in binary form 
+      Fine tune the efficiency of the proof of work system due to dynamic implemenation of adjusting 
+      the difficulty based on the timestamp (millis) and the mining rate.  
+      */
 
  //Make a instance of the blockchain class
  //Acquire the blockchain file.
@@ -13,7 +13,7 @@
 
  //Adding a block based on the differences of timestamp between each new block 
  //Timestamp based on millis based on 1st Jan 1970
- blockchain.addBlock({ data: 'initial' });
+ blockchain.addBlock({ transactions: 'initial' });
 
  //Variables for checking the average time taking to mine block.
  let prevTimestamp, nextTimestamp, nextBlock, timeDiff, average
@@ -30,10 +30,10 @@
      //Add a block with a unique data, data get from the i variable
      //Backticks `` - Template literals are string literals allowing embedded expressions.
      //${} - string interpolation
-     blockchain.addBlock({ data: `block ${i}` });
+     blockchain.addBlock({ transactions: `block ${i}` });
      nextBlock = blockchain.chain[blockchain.chain.length - 1];
 
-     console.log('first block', blockchain.chain[blockchain.chain.length - 1]);
+     console.log(`Block #No ${i}`, blockchain.chain[blockchain.chain.length - 1]);
 
      //Calculate the time difference from mining the block
      nextTimestamp = nextBlock.timestamp;

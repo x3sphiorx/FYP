@@ -22,6 +22,14 @@ const TransactionPool = require('./wallet/transaction-pool');
 const Wallet = require('./wallet/');
 const TransactionMiner = require('./app/transaction-miner');
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
+
+const path = require('path');
+const timeago = require('timeago.js');
+
+const { MINING_REWARD } = require('./config');
+
 /*
 Declare a default port (3000). 
 Declare an express object by calling the express function.
@@ -42,6 +50,9 @@ const transactionMiner = new TransactionMiner({ blockchain, transactionPool, wal
 const DEFAULT_PORT = 3000;
 const ROOT_NODE_ADDRESS = `http://localhost:${DEFAULT_PORT}`;
 
+const serveIndex = require('serve-index');
+const serveStatic = require('serve-static');
+
 /*
 Experinmental Code 
 Test publisher and subscriber function.
@@ -52,29 +63,123 @@ Delay with a 1000ms = 1s.
 //Tell express to use the middleware - bodyParser.
 app.use(bodyParser.json());
 
+var options = {
+    customCss: '.swagger-ui .topbar { display: none } '
+};
 
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+
+/**for files */
+//app.use(serveStatic(path.join(__dirname, 'public')));
+/**for directory */
+//app.use('/', express.static('public'), serveIndex('public', { 'icons': true }))
+
+// Request to `/static/some/dir/` will be mapped to `__dirname/public/some/dir/`
+app.use(serveStatic(path.join(__dirname, 'public')));
+
+app.locals.formatters = {
+    time: (rawTime) => {
+        const timeInMS = new Date(rawTime * 1000);
+        return `${timeInMS.toLocaleString()} - ${timeago().format(timeInMS)}`;
+    },
+    timeFor: (rawTime) => {
+        const timeInMS = new Date(rawTime * 1000);
+        return `${timeInMS.toLocaleString()}`;
+    },
+    hash: (hashString) => {
+        return hashString != '0' ? `${hashString.substr(0, 5)}...${hashString.substr(hashString.length - 5, 5)}` : '<empty>';
+    },
+    address: (hashString) => {
+        return hashString != '0' ? `${hashString.substr(0, 10)}...${hashString.substr(hashString.length - 5, 5)}` : '<empty>';
+    },
+    amount: (amount) => amount.toLocaleString()
+};
 
 /*
 Express docket function, get(Type) http request, read, 
 2 Parameters in total 
-1. End point from the server where it is located. ('/api/blocks').
+1. End point from the server where it is located. ('/api/blockchain').
 2. Callback function fired when get request is used. 2 parameter used.
     req - request (requestor specific request).
     res - respond (define how get is respond).
     res.json - respond in json format.
 */
-app.get('/api/blocks', (req, res) => {
-    res.json(blockchain.chain);
+app.get('/blockchainUI', (req, res) => {
+    if (req.headers['accept'] && req.headers['accept'].includes('text/html')) {
+        res.render('blockchainUI/index.pug', {
+            pageTitle: 'Cryptochain',
+            blocks: blockchain.chain,
+            miningRewards: MINING_REWARD
+        });
+    } else {
+        res.status(400)
+            .send(`Accept content not supported`);
+    }
 });
 
+app.get('/blockchainTRXP', (req, res) => {
+    if (req.headers['accept'] && req.headers['accept'].includes('text/html')) {
+        res.render('blockchainUI/trx/index.pug', {
+            pageTitle: 'Transaction Pool',
+            trxP: transactionPool.transactionMap
+        });
+    } else {
+        res.status(400)
+            .send(`Accept content not supported`);
+    }
+});
+
+app.get('/api/blockchain', (req, res) => {
+    //res.json(blockchain.chain);
+    res.status(200).json(blockchain.chain);
+});
+
+app.get('/api/blockchain/blocks/:index', (req, res) => {
+    let blockFound = blockchain.getBlockByIndex(parseInt(req.params.index));
+
+    if (blockFound == null) {
+        res.status(404)
+            .send(`Block with index '${req.params.index}' was not found in the Blockchain.`);
+    }
+
+    res.status(200).send(blockFound);
+});
+
+app.get('/api/blockchain/blocks/:hash([a-zA-Z0-9]{64})', (req, res) => {
+    let blockFound = blockchain.getBlockByHash(req.params.hash);
+
+    if (blockFound == null) {
+        res.status(404)
+            .send(`Block with hash '${req.params.hash}' was not found in the Blockchain.`);
+    }
+
+    res.status(200).send(blockFound);
+
+});
+
+
+app.get('/api/blockchain/blocks/transaction/:transactionHash([a-zA-Z0-9]{64})', (req, res) => {
+    let transactionFromBlock = blockchain.getTransactionFromBlocksByHash(req.params.transactionHash);
+
+    if (transactionFromBlock == null) {
+        res.status(404)
+            .send(`Block with Transaction Hash '${req.params.transactionHash}' was not found in the Blockchain.`);
+    }
+
+    res.status(200).send(transactionFromBlock);
+
+});
 
 
 
 /*
 Post request to mine a block on the chain.
 2 Parameters in total 
-1. End point from the server where it is located. ('/api/blocks').
+1. End point from the server where it is located. ('/api/blockchain').
 2. Callback function fired when get request is used. 2 parameter used.
     req - request (requestor specific request).
     res - respond (define how get is respond).
@@ -83,16 +188,16 @@ Recieved body in Json format.
 */
 app.post('/api/mine', (req, res) => {
     //Destructure the data from the body
-    const { data } = req.body;
+    const { transactions } = req.body;
 
     //Add a new block from the recieved data
-    blockchain.addBlock({ data });
+    blockchain.addBlock({ transactions });
 
     //New chain is broadcasted to the network
     pubsub.broadcastChain();
 
-    //Redirect to the /api/blocks endpoint.
-    res.redirect('/api/blocks');
+    //Redirect to the /api/blockchain endpoint.
+    res.redirect('/api/blockchain');
 });
 
 
@@ -162,7 +267,7 @@ Retrieve the transaction miner and mine the transaction, as a "Miner"
 app.get('/api/mine-trans', (req, res) => {
     transactionMiner.mineTransactions();
 
-    res.redirect('/api/blocks')
+    res.redirect('/api/blockchain')
 });
 
 
@@ -196,7 +301,7 @@ request(2 parameters)
     body object - stringify json response
 */
 const syncWithRootState = () => {
-    request({ url: `${ROOT_NODE_ADDRESS}/api/blocks` }, (error, response, body) => {
+    request({ url: `${ROOT_NODE_ADDRESS}/api/blockchain` }, (error, response, body) => {
         if (!error && response.statusCode === 200) {
             //Parse the body content.
             const rootChain = JSON.parse(body);
@@ -208,7 +313,7 @@ const syncWithRootState = () => {
         }
     });
 
-    request({ url: `${ROOT_NODE_ADDRESS}/api/transaction-pool-map` }, (error, response, body) => {
+    request({ url: `${ROOT_NODE_ADDRESS}/api/trans-pool` }, (error, response, body) => {
         if (!error && response.statusCode === 200) {
             //Parse the body content.
             const rootTransactionPoolMap = JSON.parse(body);
@@ -237,8 +342,14 @@ if (process.env.GENERATE_PEER_PORT === 'true') {
 2. Callback function.
 */
 const PORT = PEER_PORT || DEFAULT_PORT;
-app.listen(PORT, () => {
-    console.log(`listen at localhost: ${PORT}`);
+
+const HOST = "127.0.0.1";
+
+this.server = app.listen(PORT, HOST, () => {
+
+    //Display the address of the API document on the console. 
+    console.info(`Listening http on port: ${PORT}.`);
+    console.info(`API documentation go to http://${HOST}:${PORT}/api-docs/`);
 
     //Only sync the chain if is not the default port(root node).
     //Remove self synchronization of root node with root node.
@@ -250,4 +361,4 @@ app.listen(PORT, () => {
     //Synchronization by getting the latest update. 
     //(removed to avoid root node get update from itself)
     //syncChains();
-});
+})

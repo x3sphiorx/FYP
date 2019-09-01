@@ -1,0 +1,328 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Browser-based Demonstration of Blockchain Distributed Ledger. \n\n Visualize the Blockchain Blocks <a href='/blockchainUI'>here</a>.",
+        "version": "1.0.0.",
+        "title": "CryptoChain API"
+    },
+    "basePath": "/",
+    "schemes": [
+        "http"
+    ],
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "paths": {
+        "/api/blockchain": {
+            "get": {
+                "tags": [
+                    "Blockchain"
+                ],
+                "summary": "Get all blocks from the Blockchain.",
+                "description": "",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Block"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/blockchain/blocks/{index}": {
+            "get": {
+                "tags": [
+                    "Blockchain"
+                ],
+                "summary": "Get block by index",
+                "description": "",
+                "parameters": [{
+                    "in": "path",
+                    "name": "index",
+                    "description": "Index of the block",
+                    "required": true,
+                    "type": "string"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Block"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/api/blockchain/blocks/{hash}": {
+            "get": {
+                "tags": [
+                    "Blockchain"
+                ],
+                "summary": "Get block by hash",
+                "description": "",
+                "parameters": [{
+                    "in": "path",
+                    "name": "hash",
+                    "description": "Hash of the block",
+                    "required": true,
+                    "type": "string"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Block"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/blockchain/blocks/latest": {
+            "get": {
+                "tags": [
+                    "Blockchain"
+                ],
+                "summary": "Get the latest block",
+                "description": "",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Block"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/api/blockchain/blocks/transaction/{transactionHash}": {
+            "get": {
+                "tags": [
+                    "Blockchain"
+                ],
+                "summary": "Get a transaction by its Hash",
+                "description": "",
+                "parameters": [{
+                    "in": "path",
+                    "name": "transactionHash",
+                    "description": "Transaction Hash",
+                    "required": true,
+                    "type": "string"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Block"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/api/wallet-info": {
+            "get": {
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "Get wallet information",
+                "description": "",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": ""
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transact": {
+            "post": {
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "Create a new transaction",
+                "description": "",
+                "parameters": [{
+                    "in": "body",
+                    "name": "body",
+                    "description": "Transaction to be created",
+                    "required": true,
+                    "schema": {
+                        "type": "object",
+                        "required": [
+                            "receiver",
+                            "amount"
+                        ],
+                        "properties": {
+                            "receiver": {
+                                "type": "string",
+                                "description": "Receiver address"
+                            },
+                            "amount": {
+                                "type": "integer",
+                                "description": "Transaction Amount"
+                            }
+                        }
+                    }
+                }],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/Transaction"
+                        }
+                    },
+                    "400": {
+                        "description": "Error"
+                    }
+                }
+            }
+        },
+        "/api/mine-trans": {
+            "get": {
+                "tags": [
+                    "Miner"
+                ],
+                "summary": "Mine and add a new block",
+                "description": "Mine a new block and add it to the end of the blockchain.",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "items": {
+                                "$ref": ""
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/trans-pool": {
+            "get": {
+                "tags": [
+                    "Miner"
+                ],
+                "summary": "Acquire transactions from the pool",
+                "description": "Get all the transactions available from the transactions pool.",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "items": {
+                                "$ref": ""
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Block": {
+            "type": "object",
+            "properties": {
+                "index": {
+                    "type": "integer"
+                },
+                "lastHash": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                },
+                "nonce": {
+                    "type": "integer"
+                },
+                "difficulty": {
+                    "type": "integer"
+                },
+                "transactions": {
+                    "type": "object"
+                },
+                "hash": {
+                    "type": "string"
+                }
+            }
+        },
+        "Transaction": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "outputMap": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "RecieverAddress": {
+                                "type": "string"
+                            },
+                            "Amount": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "input": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "timestamp": {
+                                "type": "integer"
+                            },
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "address": {
+                                "type": "string"
+                            },
+                            "signature": {
+                                "type": "object",
+                                "properties": {
+                                    "r": {
+                                        "type": "string"
+                                    },
+                                    "s": {
+                                        "type": "string"
+                                    },
+                                    "recoveryParam": {
+                                        "type": "integer"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "hash": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

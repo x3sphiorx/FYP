@@ -44,6 +44,17 @@ describe('Wallet', () => {
         expect(wallet).toHaveProperty('publicKey');
     });
 
+    //Key properties present in wallet class - privateKey
+    /*
+    it('has a `privateKey`', () => {
+
+        //See how the publicKey look like in hex format
+        //console.log(wallet.publicKey);
+
+        expect(wallet).toHaveProperty('privateKey');
+    });
+    */
+
     //New testing on signing of data. 
     describe('signing data', () => {
         const data = 'foodata';
@@ -187,7 +198,7 @@ describe('Wallet', () => {
                 });
 
                 //Add the transaction into the blockchain
-                blockchain.addBlock({ data: [transactionOne, transactionTwo] });
+                blockchain.addBlock({ transactions: [transactionOne, transactionTwo] });
             });
 
             //Ensure that the output of the wallet sum up to the total of the 
@@ -218,7 +229,7 @@ describe('Wallet', () => {
                     });
 
                     //Add the recentTransaction into the blockchain.
-                    blockchain.addBlock({ data: [recentTransaction] });
+                    blockchain.addBlock({ transactions: [recentTransaction] });
                 });
 
                 //Ensure that the balance is correct after the recent transaction.
@@ -249,7 +260,7 @@ describe('Wallet', () => {
                         sameBlockTransaction = Transaction.rewardTransaction({ minerWallet: wallet });
 
                         //Add the block to the blockchain.
-                        blockchain.addBlock({ data: [recentTransaction, sameBlockTransaction] });
+                        blockchain.addBlock({ transactions: [recentTransaction, sameBlockTransaction] });
 
                         //New Wallet to create this transaction, local wallet as receiver.
                         nextBlockTransaction = new Wallet().createTransaction({
@@ -258,7 +269,7 @@ describe('Wallet', () => {
                         });
 
                         //Add the block to the blockchain.
-                        blockchain.addBlock({ data: [nextBlockTransaction] });
+                        blockchain.addBlock({ transactions: [nextBlockTransaction] });
                     });
 
                     //Test that caputes all of the above transaction. Overrall Balance
@@ -277,13 +288,6 @@ describe('Wallet', () => {
                     });
                 });
             });
-
-
-
-
-
-
-
 
         });
     });

@@ -45,11 +45,11 @@ describe('Blockchain', () => {
 
     //3.Ability to add a new block to the chain.
     it('adds a new block to the chain', () => {
-        const newData = 'foo bar';
-        blockchain.addBlock({ data: newData });
+        const newTransaction = 'foo bar';
+        blockchain.addBlock({ transactions: newTransaction });
 
         //Accessing the last item in the blockchain.chain array = newData.
-        expect(blockchain.chain[blockchain.chain.length - 1].data).toEqual(newData);
+        expect(blockchain.chain[blockchain.chain.length - 1].transactions).toEqual(newTransaction);
     });
 
 
@@ -62,7 +62,7 @@ describe('Blockchain', () => {
             it('returns false', () => {
 
                 //Genesis block not equal to the Genesis block.
-                blockchain.chain[0] = { data: 'fake-genesis' };
+                blockchain.chain[0] = { transactions: 'fake-genesis' };
 
                 expect(Blockchain.isValidChain(blockchain.chain)).toBe(false);
             });
@@ -73,9 +73,9 @@ describe('Blockchain', () => {
 
             //Multiple Added Blocks before each tests, reduce duplicate code.
             beforeEach(() => {
-                blockchain.addBlock({ data: 'Bears' });
-                blockchain.addBlock({ data: 'Beets' });
-                blockchain.addBlock({ data: 'Boots' });
+                blockchain.addBlock({ transactions: 'Bears' });
+                blockchain.addBlock({ transactions: 'Beets' });
+                blockchain.addBlock({ transactions: 'Boots' });
             });
 
             //Invalid block down the chain, lashHash was changed. Return False.
@@ -96,7 +96,7 @@ describe('Blockchain', () => {
                 it('returns false', () => {
 
                     //Invalid data field.
-                    blockchain.chain[2].data = 'broken-data';
+                    blockchain.chain[2].transactions = 'broken-data';
 
                     expect(Blockchain.isValidChain(blockchain.chain)).toBe(false);
                 });
@@ -110,32 +110,35 @@ describe('Blockchain', () => {
                 it('returns false', () => {
                     const lastBlock = blockchain.chain[blockchain.chain.length - 1];
                     const lastHash = lastBlock.hash;
+                    const lastIndex = lastBlock.index;
                     const timestamp = Date.now();
                     const nonce = 0;
-                    const data = [];
+                    const transactions = [];
 
                     //Modified difficulty with a reduction of 3 (Test case)
                     const difficulty = lastBlock.difficulty - 3;
 
-                    const hash = cryptoHash(timestamp, lastHash, difficulty, nonce, data);
+                    const hash = cryptoHash(lastIndex, timestamp, lastHash, difficulty, nonce, transactions);
+
                     const corruptedBlock = new Block({
+                        lastIndex,
                         timestamp,
                         lastHash,
                         hash,
                         nonce,
                         difficulty,
-                        data
+                        transactions
                     });
 
                     blockchain.chain.push(corruptedBlock);
 
                     //Value should be false, since the blockchain contain the corrupted block.
                     expect(Blockchain.isValidChain(blockchain.chain)).toBe(false);
-                })
+                });
             });
 
             //Valid and correct chain. Return True.
-            describe('and the chain does not contain any invalid vlocks', () => {
+            describe('and the chain does not contain any invalid blocks', () => {
 
                 it('returns true', () => {
 
@@ -192,9 +195,9 @@ describe('Blockchain', () => {
 
             //Multiple added blocks before each tests, reduce duplicate code.
             beforeEach(() => {
-                newChain.addBlock({ data: 'Bears' });
-                newChain.addBlock({ data: 'Beets' });
-                newChain.addBlock({ data: 'Boots' });
+                newChain.addBlock({ transactions: 'Bears' });
+                newChain.addBlock({ transactions: 'Beets' });
+                newChain.addBlock({ transactions: 'Boots' });
             });
 
             //Chain is invalid.
@@ -246,7 +249,7 @@ describe('Blockchain', () => {
                 blockchain.validTransactionData = validTransactionDataMock;
 
                 //A a block such that the chain is longer than the original chain.
-                newChain.addBlock({ data: 'test-data' });
+                newChain.addBlock({ transactions: 'test-data' });
 
                 blockchain.replaceChain(newChain.chain, true);
 
@@ -291,7 +294,7 @@ describe('Blockchain', () => {
             it('it returns true', () => {
 
                 //Simulate a new chain with a transaction data and the reward data.
-                newChain.addBlock({ data: [transaction, rewardTransaction] });
+                newChain.addBlock({ transactions: [transaction, rewardTransaction] });
 
                 //Ensure that the simulate chain is valid base on the "OWN, Legit blockchain".
                 //Hence, blockchain.validTransaction().
@@ -323,7 +326,7 @@ describe('Blockchain', () => {
             it('it returns false and logs an error', () => {
 
                 //Simulate multiple rewardTransaction within the block.
-                newChain.addBlock({ data: [transaction, rewardTransaction, rewardTransaction] });
+                newChain.addBlock({ transactions: [transaction, rewardTransaction, rewardTransaction] });
 
                 //Ensure that the simulate chain is not valid base on the known blockchain 
                 //instead of the incoming blockchain
@@ -350,7 +353,7 @@ describe('Blockchain', () => {
                     transaction.outputMap[wallet.publicKey] = 999999;
 
                     //Simulate the blockchain by adding the malformed block into the chain
-                    newChain.addBlock({ data: [transaction, rewardTransaction] });
+                    newChain.addBlock({ transactions: [transaction, rewardTransaction] });
 
                     //Ensure that the simulate chain is not valid base on the known blockchain 
                     //instead of the incoming blockchain
@@ -375,7 +378,7 @@ describe('Blockchain', () => {
                     rewardTransaction.outputMap[wallet.publicKey] = 999999;
 
                     //Simulate the blockchain by adding the malformed block into the chain
-                    newChain.addBlock({ data: [transaction, rewardTransaction] });
+                    newChain.addBlock({ transactions: [transaction, rewardTransaction] });
 
                     //Ensure that the simulate chain is not valid base on the known blockchain 
                     //instead of the incoming blockchain
@@ -425,7 +428,7 @@ describe('Blockchain', () => {
 
                 //Simulate the block by adding the malformed transaction in the block following by adding to 
                 //the chain.
-                newChain.addBlock({ data: [evilTransaction, rewardTransaction] });
+                newChain.addBlock({ transactions: [evilTransaction, rewardTransaction] });
 
                 //Ensure that the simulate chain is not valid base on the known blockchain 
                 //instead of the incoming blockchain
@@ -452,7 +455,7 @@ describe('Blockchain', () => {
 
                 //Simulate by adding a block on the chain and multiple transaction on the block.
                 newChain.addBlock({
-                    data: [transaction, transaction, transaction, rewardTransaction]
+                    transactions: [transaction, transaction, transaction, rewardTransaction]
                 });
 
                 //Ensure that the simulate chain is not valid base on the known blockchain 

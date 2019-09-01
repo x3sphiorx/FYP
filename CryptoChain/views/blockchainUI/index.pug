@@ -1,0 +1,84 @@
+extends ../layout.pug
+
+block content
+    section.section
+        .container
+            .level
+                .level-left
+                    h2.title.is-3 Blocks Explorer
+                .level-right
+                    .tags.has-addons
+                        span.tag Type
+                        span.tag.is-primary Transactions
+                        span.tag.is-danger Reward
+            hr
+            .columns.is-multiline
+                each block in blocks                    
+                        .column.is-one-quarter
+                            .box
+                                .content.is-small
+                                    p.title.is-4
+                                        | Block No 
+                                        small ##{block.index}
+                                    p.subtitle.is-6
+                                        | Hash: 
+                                        code.tooltip
+                                            | #{formatters.hash(block.hash)}
+                                            span.tooltiptext #{block.hash}                                            
+                                        if block.index > 0
+                                            br                                                
+                                            | Previous: 
+                                            code.tooltip
+                                                | #{formatters.hash(block.lastHash)}
+                                                span.tooltiptext #{block.lastHash}                                                
+                                    hr
+
+                                    if block.index > 0
+                                             each transaction in block.transactions
+                                                .content.is-small
+                                                    p.title.is-6
+                                                        | Trx ID 
+                                                        small ##{formatters.address(transaction.id)}
+                                                    if transaction.input.address !== '*mining-authorized-reward*'
+                                                        if(transaction.input.timestamp !== 'undefined')
+                                                            //pre #{JSON.stringify(transaction)}
+                                                            //pre #{JSON.stringify(transaction.outputMap)}
+                                                            div.notification(class='is-primary')
+                                                                p
+                                                                    span.icon.has-text-white
+                                                                        i.fas.fa-arrow-right(data-fa-transform="rotate-45")
+                                                                    | #{formatters.amount(transaction.input.amount)}
+                                                                    |  from 
+                                                                    code.tooltip
+                                                                        | #{formatters.address(transaction.input.address)}
+                                                                        span.tooltiptext #{transaction.input.address}
+                                                                    
+                                                                each val, index in transaction.outputMap
+                                                                    p
+                                                                        span.icon.has-text-white
+                                                                            i.fas.fa-arrow-right(data-fa-transform="rotate-320")
+                                                                        |  #{formatters.amount(val)}
+                                                                        |  to 
+                                                                        code.tooltip
+                                                                            | #{formatters.address(index)}
+                                                                            span.tooltiptext #{index}
+                                                                    
+                                                    else
+                                                        div.notification(class='is-danger')
+                                                            p
+                                                                span.icon.has-text-white
+                                                                    i.fas.fa-arrow-right(data-fa-transform="rotate-45")
+                                                                | #{formatters.amount(miningRewards)}
+                                                                |  from
+                                                                | #{transaction.input.address} : 
+                                                                |  to 
+                                                                code.tooltip
+                                                                    | #{formatters.address(Object.keys(transaction.outputMap)[0])}
+                                                                    span.tooltiptext #{Object.keys(transaction.outputMap)[0]}
+                                                    
+                                                    hr
+                                    else
+                                        .subtitle.is-3.has-text-centered Genesis
+
+                                    p.has-text-grey-light.has-text-right.is-small
+                                                    | #{formatters.time(block.timestamp)}

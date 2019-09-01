@@ -6,7 +6,7 @@ Acquire the hardcoded REWARD INPUTS and MINING REWARDS
 */
 const Transaction = require('./transaction');
 const Wallet = require('./index');
-const { verifySignature } = require('../util');
+const { verifySignature, cryptoHash, cryptoRandomID } = require('../util');
 const { REWARD_INPUT, MINING_REWARD } = require('../config');
 
 //Describe how the transaction class
@@ -30,9 +30,14 @@ describe('Transaction', () => {
         transaction = new Transaction({ senderWallet, receiver, amount });
     });
 
-    //Ensure transaction has a ID.
+    //Ensure transaction has a ID field.
     it('has an `id`', () => {
         expect(transaction).toHaveProperty('id');
+    });
+
+    //Ensure transaction has a hash field.
+    it('has a `hash`', () => {
+        expect(transaction).toHaveProperty('hash');
     });
 
     /*
@@ -54,6 +59,7 @@ describe('Transaction', () => {
                 .toEqual(senderWallet.balance - amount);
         });
     });
+
 
     /*
     Transaction input strcture. Make the transaction official by 
@@ -113,7 +119,10 @@ describe('Transaction', () => {
         /*
         2 Cases when validating the transaction
         1 - transaction is valid.
-        2 - transaction is invalid. (Output Map is invalid.) or (Input signature is fake.)
+        2 - transaction is invalid. 
+            2a. (Output Map is invalid.), 
+            2b. (Input signature is fake.), 
+            2c. (Hash of input output and id dont match witht the hash of the transaction).
         */
         describe('when the transaction is valid', () => {
             it('returns true', () => {
@@ -122,6 +131,14 @@ describe('Transaction', () => {
         });
 
         describe('when the transaction is invalid', () => {
+            describe('and a transaction hash values is invalid', () => {
+                it('returns false and logs an error', () => {
+                    transaction.hash = cryptoHash(cryptoHash(transaction.outputMap, transaction.input, cryptoRandomID(64)));
+
+                    expect(Transaction.validTransaction(transaction)).toBe(false);
+                    expect(errorMock).toHaveBeenCalled();
+                });
+            });
             describe('and a transaction outputMap values is invalid', () => {
                 it('returns false and logs an error', () => {
                     transaction.outputMap[senderWallet.publicKey] = 999999;

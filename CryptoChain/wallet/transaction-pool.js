@@ -27,7 +27,7 @@ class TransactionPool {
             const block = chain[i];
 
             //Loop through the transaction within the blocks.
-            for (let transaction of block.data) {
+            for (let transaction of block.transactions) {
                 //If the transactionMap contains a value in transaction id , remove the transaction.
                 if (this.transactionMap[transaction.id]) {
                     //Remote the reference.

@@ -3,5 +3,8 @@
 		{
 			"path": "CryptoChain"
 		}
-	]
+	],
+	"settings": {
+		"git.ignoreLimitWarning": true
+	}
 }

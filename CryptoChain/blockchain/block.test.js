@@ -15,7 +15,8 @@ describe('Block', () => {
     const timestamp = 2000;
     const lastHash = 'foo-hash';
     const hash = 'bar-hash';
-    const data = ['blockchain', 'data'];
+    const transactions = ['blockchain', 'data'];
+    const index = 1;
 
     /*
     Proof of work requirement, start with a certain number of leading '0's. 
@@ -29,18 +30,21 @@ describe('Block', () => {
     const difficulty = 1;
 
     //Original block instances.
-    const block = new Block({ timestamp, lastHash, hash, data, nonce, difficulty });
+    const block = new Block({ index, hash, lastHash, timestamp, transactions, nonce, difficulty });
 
 
+    //Ensure that the block have the following properties.
     it('has a timestamp, lasthash, hash, and data property', () => {
         expect(block.timestamp).toEqual(timestamp);
         expect(block.lastHash).toEqual(lastHash);
         expect(block.hash).toEqual(hash);
-        expect(block.data).toEqual(data);
+        expect(block.transactions).toEqual(transactions);
         expect(block.nonce).toEqual(nonce);
         expect(block.difficulty).toEqual(difficulty);
+        expect(block.index).toEqual(index);
     });
 
+    //Ensure that the gensis block is valid.
     describe('gensis()', () => {
         const genesisBlock = Block.genesis();
         it('return a Block instance', () => {
@@ -51,46 +55,60 @@ describe('Block', () => {
         });
     });
 
+    //Ensure following test cases upon block mining.
     describe('mineBlock()', () => {
         const lastBlock = Block.genesis();
-        const data = 'mined data';
+        const transactions = 'mined data';
+
         const minedBlock = Block.mineBlock({
             lastBlock,
-            data,
+            transactions,
         });
 
-        it('returns a Block instance', () => {
+        //Ensure the return object from mining is a instance of Block class.
+        it('it returns a Block instance', () => {
             expect(minedBlock instanceof Block)
                 .toBe(true);
         });
 
-        it('sets the `lastHash` to be the `hash` of the lastBlock', () => {
+        //Ensure that the new block last hash is equal to the previous block hash.
+        it('it sets the `lastHash` to be the `hash` of the lastBlock', () => {
             expect(minedBlock.lastHash)
                 .toEqual(lastBlock.hash);
             //Expect Actual => Value
         });
 
-        it('sets the `data`', () => {
-            expect(minedBlock.data)
-                .toEqual(data);
+        //Ensure that the transaction is set to the data field.
+        it('it sets the `transaction`', () => {
+            expect(minedBlock.transactions)
+                .toEqual(transactions);
         });
 
-        it('sets a `timestamp`', () => {
+        //Ensure that the block contains a timestamp.
+        it('it sets a `timestamp`', () => {
             expect(minedBlock.timestamp)
                 .not
                 .toEqual(undefined);
         });
 
+        //Ensure that the block is always 1 incremental on the previous block.
+        it('it sets the `index` to the last block index + 1', () => {
+            expect(minedBlock.index)
+                .toEqual(lastBlock.index + 1);
+        })
+
         //SHA-256 generation.
         it('creates a SHA-256 `hash` based on the proper inputs', () => {
+            //console.log(minedBlock.index, minedBlock.timestamp, minedBlock.nonce, minedBlock.difficulty, minedBlock.lastHash, minedBlock.data);
             expect(minedBlock.hash)
                 .toEqual(
                     cryptoHash(
+                        minedBlock.index,
                         minedBlock.timestamp,
                         minedBlock.nonce,
                         minedBlock.difficulty,
                         lastBlock.hash,
-                        data
+                        transactions,
                     )
                 );
         });

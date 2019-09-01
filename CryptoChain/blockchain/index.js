@@ -16,20 +16,59 @@ class Blockchain {
     constructor() {
         // Start with genesis block
         this.chain = [Block.genesis()];
+        this.reward = MINING_REWARD;
     }
 
     // Add block function, take in object as its argument
-    addBlock({ data }) {
+    addBlock({ transactions }) {
         // Mine block function with the reference of the last block and the data
         const newBlock = Block.mineBlock({
             lastBlock: this.chain[this.chain.length - 1],
-            data
+            transactions
         });
 
         // Push it into the end of the chain.
         this.chain.push(newBlock);
     }
 
+    getBlockByIndex(index) {
+        if (index < this.chain.length + 1) {
+            return this.chain[index];
+        } else {
+            return null;
+        }
+    }
+
+    getBlockByHash(hash) {
+        let blockFound = this.chain.find(o => o.hash === hash);
+
+        if (blockFound !== null) {
+            return blockFound;
+        } else {
+            return null;
+        }
+    }
+
+    getLastestBlock() {
+        return this.chain[this.chain.length - 1];
+    }
+
+    getTransactionsById(id) {
+
+    }
+
+    getTransactionFromBlocksByHash(hash) {
+        let transactionFound = this.chain.find(
+            b => b.transactions.some(
+                trx => trx.hash === hash)
+        );
+
+        if (transactionFound !== null) {
+            return transactionFound;
+        } else {
+            return null;
+        }
+    }
 
     /*
     Chain Replacement
@@ -78,8 +117,6 @@ class Blockchain {
         this.chain = chain;
     }
 
-
-
     //Chain Validation
     static isValidChain(chain) {
 
@@ -95,14 +132,7 @@ class Blockchain {
 
             //Using js destructuing syntax (inline destructuing).
             //Added nonce & difficulty for POW.
-            const {
-                timestamp,
-                lastHash,
-                hash,
-                nonce,
-                difficulty,
-                data
-            } = chain[i];
+            const { index, timestamp, lastHash, hash, nonce, difficulty, transactions } = chain[i];
 
             //Get the hash of the last block.
             const actualLastHash = chain[i - 1].hash;
@@ -115,7 +145,7 @@ class Blockchain {
 
             //Generate a valid hash based on timestamp, lashHash and data.
             //Added nonce & difficulty for POW.
-            const validatedHash = cryptoHash(timestamp, lastHash, data, nonce, difficulty);
+            const validatedHash = cryptoHash(index, timestamp, lastHash, transactions, nonce, difficulty);
 
             //If hash generated is not matching. Return False.
             if (hash !== validatedHash) return false;
@@ -129,8 +159,6 @@ class Blockchain {
 
         return true;
     }
-
-
 
     /*
     Valid transaction data within the blockchain. (Further enchancement)
@@ -151,7 +179,7 @@ class Blockchain {
             let rewardTransactionCount = 0;
 
             //Iterate throught the transaction within the blocks.
-            for (let transaction of block.data) {
+            for (let transaction of block.transactions) {
 
                 //Check and ensure if the transaction if is a kind of reward transaction by comparing
                 //the transaction input address with the system REWARD_INPUT.address.
@@ -190,12 +218,14 @@ class Blockchain {
                         address: transaction.input.address
                     });
 
+                    //console.log('blockchain.js' + transaction.input.amount + 'and' + trueBalance);
+
                     //Ensure that the input amount is equal to the true balance. Prevent attacker
                     //from creating a fake balance.
-                    if (transaction.input.amount !== trueBalance) {
-                        console.error('Invalid input amount.');
-                        return false;
-                    }
+                    // if (transaction.input.amount !== trueBalance) {
+                    //     console.error('Invalid input amount');
+                    //     return false;
+                    //   }
 
                     //A collection of unique item. Check and ensure that if the set has the tranaction.
                     //if the transaction exisi, report false and trigger error.

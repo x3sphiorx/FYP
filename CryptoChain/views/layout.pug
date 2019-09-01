@@ -1,0 +1,62 @@
+doctype html
+html(lang="en").has-navbar-fixed-top
+    head
+        title #{pageTitle}
+        meta(name="viewport", content="width=device-width, initial-scale=1")
+        link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.min.css")        
+        script(src="https://use.fontawesome.com/releases/v5.7.2/js/all.js", defer)        
+        style(type='text/css').
+            /* Tooltip container */
+            .tooltip {
+                position: relative;                                
+            }
+
+            /* Tooltip text */
+            .tooltip .tooltiptext {
+                visibility: hidden;                
+                background-color: black;
+                color: #fff;
+                text-align: center;
+                padding: 5px;
+                border-radius: 6px;
+                top: -5px;
+                left: 105%;   
+                word-break: normal;
+            
+                /* Position the tooltip text - see examples below! */
+                position: absolute;
+                z-index: 1;
+            }
+
+            /* Show the tooltip text when you mouse over the tooltip container */
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+            }
+    body
+        nav.navbar.is-fixed-top.is-dark
+            .container
+                .navbar-menu.is-active
+                    .navbar-brand
+                        figure.image.is-64x64
+                            img(src='/images/network.png', vspace='5.5')
+                        span.navbar-item.title.is-2 CryptoChain
+                    .navbar-start                        
+                        a.navbar-item(href="/api-docs/") API
+                        a.navbar-item(href="/blockchainUI", class=`${pageTitle=='Blockchain' ? 'is-active' : ''}`) Blockchain
+                        a.navbar-item(href="/blockchainTRXP", class=`${pageTitle=='Blockchain' ? 'is-active' : ''}`) Trx Pool
+                    a.navbar-burger(role='button', aria-label='menu', aria-expanded='false')
+                    span(aria-hidden='true')
+                    span(aria-hidden='true')
+                    span(aria-hidden='true')
+                    .navbar-end   
+                        span.navbar-item.title.is-6 SCSE18-0421           
+                        
+        block content
+        script.
+            function toggle_visibility(id) {
+                var e = document.getElementById(id);
+                if ( e.style.display == 'none' )
+                    e.style.display = null;
+                else
+                    e.style.display = 'none';
+            }

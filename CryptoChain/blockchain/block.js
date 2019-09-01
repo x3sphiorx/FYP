@@ -1,28 +1,39 @@
 const hexToBinary = require('hex-to-binary');
 const { GENESIS_DATA, MINE_RATE } = require('../config');
 const { cryptoHash } = require('../util');
+const { MINING_REWARD } = require('../config');
 
 
 class Block {
     /*
     Added nonce and difficulty field for POW 
     */
-    constructor({ timestamp, lastHash, hash, data, nonce, difficulty }) {
-        this.timestamp = timestamp;
+    constructor({ index, hash, lastHash, timestamp, transactions, nonce, difficulty }) {
+        this.index = index;
         this.lastHash = lastHash;
-        this.hash = hash;
-        this.data = data;
+        this.timestamp = timestamp;
         this.nonce = nonce;
         this.difficulty = difficulty;
+        this.transactions = transactions;
+        this.hash = hash;
+    }
+
+    toHash() {
+        return cryptoHash(this.index, this.timestamp, this.nonce, this.difficulty, this.lastHash, this.transactions);
     }
 
     static genesis() {
-        return new this(GENESIS_DATA);
+        let block = new Block(GENESIS_DATA);
+        block.hash = block.toHash();
+        return block;
     }
 
-    static mineBlock({ lastBlock, data }) {
+    static mineBlock({ lastBlock, transactions }) {
         //const timestamp = Date.now();
         const lastHash = lastBlock.hash;
+
+        //Get the current length of the chain from the previous block.
+        const index = lastBlock.index + 1;
 
         //Change to let, reset on every loop
         let hash, timestamp;
@@ -48,9 +59,10 @@ class Block {
         do {
             //Increment the nonce, changes on everyloop.
             nonce++;
-            timestamp = Date.now();
-            difficulty = Block.adjustDifficulty({ originalBlock: lastBlock, timestamp })
-            hash = cryptoHash(timestamp, lastHash, data, nonce, difficulty);
+            timestamp = Math.floor(Date.now() / 1000);
+            difficulty = Block.adjustDifficulty({ originalBlock: lastBlock, timestamp });
+            hash = cryptoHash(index, timestamp, nonce, difficulty, lastHash, transactions);
+            //console.log(index, timestamp, nonce, difficulty, lastHash, data);
         }
         //1. Mining block with binary leading zeros (fine grain/strict)
         while (hexToBinary(hash).substring(0, difficulty) !== '0'.repeat(difficulty));
@@ -58,14 +70,19 @@ class Block {
         //while (hash.substring(0, difficulty) !== '0'.repeat(difficulty));
 
         return new this({
-            timestamp,
+            index,
             lastHash,
-            data,
-            difficulty,
+            timestamp,
             nonce,
+            difficulty,
+            transactions,
             hash
             //hash: cryptoHash(timestamp, lastHash, data, nonce, difficulty)
         });
+    }
+
+    static getReward() {
+        return MINING_REWARD;
     }
 
     /*
@@ -79,7 +96,7 @@ class Block {
         if (difficulty < 1) return 1;
 
         //Difficulty lowered (incoming timestamp vs original timestamp, 
-        //if greated that mine rate),
+        //if greater that mine rate),
         if ((timestamp - originalBlock.timestamp) > MINE_RATE) return difficulty - 1;
 
         //Difficulty raise.

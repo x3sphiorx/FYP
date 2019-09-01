@@ -1,17 +1,19 @@
 /*
 Acqurie the uuid modules for the unique id.
 Acqurie the verifySignature method for the transaction verification
+Acquire the cryptoHash module for hashing functionality & cryptoRandomID for random ID geneator.
 Acquire the hardcoded REWARD INPUTS and MINING REWARDS
 */
-const uuid = require('uuid/v1');
-const { verifySignature } = require('../util');
+//const uuid = require('uuid/v4');
 const { REWARD_INPUT, MINING_REWARD } = require('../config');
+const { verifySignature, cryptoHash, cryptoRandomID } = require('../util');
 
 class Transaction {
 
     constructor({ senderWallet, receiver, amount, outputMap, input }) {
-        //Unique ID base on the uuid version 1
-        this.id = uuid();
+
+        //Create a random ID for the transaction
+        this.id = cryptoRandomID(64);
 
         //OutputMap trigger by calling the helper method and passing in the object
         //If outputMap is undefinied, it would createOutputMap. Else use the incoming outputMap.
@@ -20,6 +22,9 @@ class Transaction {
         //input trigger by calling the helper method and passing in the object.
         //If outputMap is undefinied, it would createInput. Else used the incoming input
         this.input = input || this.createInput({ senderWallet, outputMap: this.outputMap });
+
+        //Hash the transaction with the ID and the output and input of the transactions.
+        this.hash = cryptoHash(cryptoHash(this.outputMap, this.input, this.id));
     }
 
     /*
@@ -48,7 +53,7 @@ class Transaction {
         return {
 
             //Return the timestamp 
-            timestamp: Date.now(),
+            timestamp: Math.floor(Date.now() / 1000),
             amount: senderWallet.balance,
             address: senderWallet.publicKey,
             signature: senderWallet.sign(outputMap)
@@ -62,8 +67,10 @@ class Transaction {
     static validTransaction(transaction) {
         //Destructure input and the transaction strcture.
         const {
+            id,
             input: { address, amount, signature },
-            outputMap
+            outputMap,
+            hash
         } = transaction;
 
         //Check all the values in the outputMap but reduce the 
@@ -72,16 +79,23 @@ class Transaction {
             .reduce((total, outputAmount) => total + outputAmount);
 
         //Function return false if is invalid
+        //Check if the hashing of the input, output and id meet the hash of the transaction.
+        if (cryptoHash(cryptoHash(transaction.outputMap, transaction.input, transaction.id)) != transaction.hash) {
+            console.error(`Invalid Transaction hash from this : ${address}.`);
+            return false;
+        }
+
         //Check the overrall outputTotal equals to the amount.
         if (amount !== outputTotal) {
             console.error(`Invalid Transaction from this : ${address}.`);
             return false;
         }
-        //Chekc if the signature is valid.
+        //Check if the signature is valid.
         if (!verifySignature({ publicKey: address, data: outputMap, signature })) {
             console.error(`Invalid Signature from this : ${address}`);
             return false;
         }
+
         return true;
     }
 
@@ -94,7 +108,8 @@ class Transaction {
         return new this({
             input: REWARD_INPUT,
             outputMap: {
-                [minerWallet.publicKey]: MINING_REWARD }
+                [minerWallet.publicKey]: MINING_REWARD
+            }
         });
     }
 
@@ -127,6 +142,9 @@ class Transaction {
 
         //Recreate the input field by resign.
         this.input = this.createInput({ senderWallet, outputMap: this.outputMap });
+
+        //Rehash the transaction upon update of new transaction from same user.
+        this.hash = cryptoHash(cryptoHash(this.outputMap, this.input, this.id));
     }
 }
 

@@ -151,7 +151,7 @@ describe('TransactionPool', () => {
                 //the expectedTransactionMap.
                 //Even iteration - add to the blockchain.
                 if (i % 2 === 0) {
-                    blockchain.addBlock({ data: [transaction] })
+                    blockchain.addBlock({ transactions: [transaction] })
                 } else {
                     expectedTransactionMap[transaction.id] = transaction;
                 }

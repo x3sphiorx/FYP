@@ -1,3 +1,8 @@
+/*
+Acquire the crypto module.
+Acquire the hexToBinary module.
+*/
+
 const crypto = require('crypto');
 const hexToBinary = require('hex-to-binary');
 

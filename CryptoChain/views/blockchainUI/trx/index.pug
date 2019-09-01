@@ -1,0 +1,91 @@
+extends ../../layout.pug
+
+block content
+    section.section
+        .container
+            .level
+                .level-left
+                    h2.title.is-3 Pending Transactions
+            hr
+            .columns.is-multiline
+                each transaction in trxP
+                    .column.is-one-quarter
+                        .box
+                            .content.is-small
+                                p.title.is-4
+                                    | Transaction ID 
+                                    small ##{formatters.hash(transaction.id)}
+                                    |
+                                    br
+                                    br
+                                    |
+                                    p.subtitle.is-6
+                                        | Hash: 
+                                        code.tooltip
+                                            | #{formatters.hash(transaction.hash)}
+                                            span.tooltiptext #{transaction.hash}
+                                        |
+                                        br 
+                                        br
+                                        | OutputMap:
+                                        div.notification(class='is-primary')
+                                            p
+                                                //pre #{JSON.stringify(transaction.outputMap)}
+                                                each val, index in transaction.outputMap
+                                                    p
+                                                        span.icon.has-text-white
+                                                            i.fas.fa-arrow-right(data-fa-transform="rotate-320")
+                                                        |  #{formatters.amount(val)}
+                                                        |  to 
+                                                        code.tooltip
+                                                            | #{formatters.address(index)}
+                                                            span.tooltiptext #{index}
+                                        p.subtitle.is-6 
+                                            | Input:
+                                            div.notification(class='is-warning')
+                                                p
+                                                    span.icon.has-text-white
+                                                        i.fas.fa-arrow-right(data-fa-transform="rotate-0")
+                                                    | Time Created : #{formatters.timeFor(transaction.input.timestamp)}   
+                                                    br 
+                                                    span.icon.has-text-white
+                                                        i.fas.fa-arrow-right(data-fa-transform="rotate-0")
+                                                    | Amount : #{transaction.input.amount} Coins
+                                                    br
+                                                    span.icon.has-text-white
+                                                        i.fas.fa-arrow-right(data-fa-transform="rotate-0")
+                                                    | Signature : 
+                                                    br
+                                                    span.icon.has-text-primary
+                                                        i.fas.fa-arrow-right(data-fa-transform="rotate-0")
+                                                    | R : 
+                                                    code.tooltip
+                                                        | #{formatters.hash(transaction.input.signature.r.toString())}
+                                                        span.tooltiptext #{transaction.input.signature.r.toString()}
+                                                    br
+                                                    span.icon.has-text-danger
+                                                        i.fas.fa-arrow-right(data-fa-transform="rotate-0")
+                                                    | S : 
+                                                    code.tooltip
+                                                        | #{formatters.hash(transaction.input.signature.s.toString())}
+                                                        span.tooltiptext #{transaction.input.signature.s.toString()}
+                                                    br
+                                                    span.icon.has-text-link
+                                                        i.fas.fa-arrow-right(data-fa-transform="rotate-0")
+                                                    | Owner Address :
+                                                    br
+                                                    code.tooltip
+                                                        | #{formatters.address(transaction.input.address.toString())}
+                                                        span.tooltiptext #{transaction.input.address.toString()}
+                                                    br
+                                                    
+                                                    //pre #{JSON.stringify(transaction.input.signature.r)}
+                                                    
+                                                                                                                        
+                                    hr
+                                p.has-text-grey-light.has-text-right.is-small
+                                    | #{formatters.time(transaction.input.timestamp)}   
+
+
+
+                    

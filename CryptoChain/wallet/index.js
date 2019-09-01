@@ -8,6 +8,9 @@ const Transaction = require('./transaction');
 const { STARTING_BALANCE } = require('../config');
 const { ec, cryptoHash } = require('../util');
 
+
+const R = require('ramda');
+
 class Wallet {
     constructor() {
         this.balance = STARTING_BALANCE;
@@ -17,6 +20,9 @@ class Wallet {
 
         //Convert the Public keyPair to hex format.
         this.publicKey = this.keyPair.getPublic().encode('hex');
+
+        //Convert the Private keyPair to hex format.
+        //this.privateKey = this.keyPair.getPrivate().encode('hex');
     }
 
     //Sign the incoming data.
@@ -63,13 +69,14 @@ class Wallet {
             const block = chain[i];
 
             //Loop through the transactions.
-            for (let transaction of block.data) {
+            for (let transaction of block.transactions) {
 
                 //If the address/wallet has conducted a transaction.
                 if (transaction.input.address === address) {
                     hasConductedTransaction = true;
                 }
 
+                //Access the value of the output map at that address.
                 const addressOutput = transaction.outputMap[address];
 
                 //If the addressOutput is definied.
